@@ -14,7 +14,8 @@ def read_wave(path):
         frame_rate = wav_file.getframerate()
         n_samples = wav_file.getnframes()
         samples = wav_file.readframes(n_samples)
-        audio = np.frombuffer(samples, dtype=np.int16).astype(np.int32)
+        audio = np.frombuffer(samples, dtype=np.int16).astype(np.float32) / 32767.0
+    
     audio_time  = n_samples/frame_rate #in seconds
     display(Audio(data=audio, rate=frame_rate))
     return audio, frame_rate, audio_time, n_samples
@@ -31,10 +32,13 @@ def split_to_frames(audio, frame_rate, percent_frame_size=0.1, percent_hop_lengt
         frame = audio[i:i+frame_size]
         if len(frame) == frame_size:
             frames.append(frame)
-    frames = np.stack(frames)
-    n_ = frames.shape[0]
-    N_ = frames.shape[1]
-    return frames, n_, N_
+    try:
+        frames = np.stack(frames)
+        n_ = frames.shape[0]
+        N_ = frames.shape[1]
+        return frames, n_, N_
+    except:
+        print("Error: frames are not the same size")
 
 
 
@@ -61,11 +65,6 @@ def plot_audio(audio,audio_time, fig=None,subplot_row=1, subplot_col=1):
             row=subplot_row, col=subplot_col
         )
 
-        # fig.update_layout(
-        #     title_text="Audio Waveform",
-        #     xaxis_title="Time (s)",
-        #     yaxis_title="Amplitude"
-        # )
 
 
 
@@ -97,12 +96,7 @@ def plot_volumes(frames, n_,N_, fig=None,subplot_row=1, subplot_col=1):
             row=subplot_row, col=subplot_col
         )
 
-        # fig.update_layout(
-        #     title_text="Volume of audio frames",
-        #     xaxis_title="Frame number",
-        #     yaxis_title="Volume (dB)"
-        # )
-    
+ 
     
 
 def get_ste(audio, N_):
@@ -130,13 +124,13 @@ def plot_ste(frames, n_,N_, fig=None,subplot_row=1, subplot_col=1):
             row=subplot_row, col=subplot_col
         )
     
-def get_zcr(audio):
+def get_zcr(audio,N_):
     # ZCR - zero crossing rate
-    return np.sum(np.abs(np.diff(np.sign(audio))))/2
+    return np.sum(np.abs(np.diff(np.sign(audio))))/(2*N_)
 
 
-def plot_zcr(frames, n_, fig=None,subplot_row=1, subplot_col=1):
-    zcr = np.apply_along_axis(get_zcr, 1, frames)
+def plot_zcr(frames, n_,N_, fig=None,subplot_row=1, subplot_col=1):
+    zcr = np.apply_along_axis(get_zcr, 1, frames, N_=N_)
     if fig is None:
         fig = make_subplots(rows=1, cols=1)
         fig.add_trace(
@@ -156,17 +150,18 @@ def plot_zcr(frames, n_, fig=None,subplot_row=1, subplot_col=1):
     
     
 
-def get_sr(audio, N_):
+def get_sr(audio, N_, zcr_bound,volume_bound):
     # sr - silent ratio
-    zcr = get_zcr(audio)
-    if zcr == 0:
+    zrc = get_zcr(audio,N_)
+    volume= get_volume(audio, N_)
+    if zrc > zcr_bound and volume > volume_bound:
+        return 1
+    else:
         return 0
-    else: 
-        return get_volume(audio, N_)/zcr
 
 
-def plot_sr(frames, n_, N_ ,fig=None,subplot_row=1, subplot_col=1):
-    sr = np.apply_along_axis(get_sr, 1, frames, N_=N_)
+def plot_sr(frames, n_, N_, bounds=[0.1,0.1],fig=None,subplot_row=1, subplot_col=1):
+    sr = np.apply_along_axis(get_sr, 1, frames, N_=N_, zcr_bound=bounds[0], volume_bound=bounds[1])
     if fig is None:
         fig = make_subplots(rows=1, cols=1)
         fig.add_trace(
@@ -202,7 +197,7 @@ def plot_vu(frames,n_, fig=None,subplot_row=1, subplot_col=1):
         fig.update_layout(
             title="Volume undulation",
             xaxis_title="Frame number",
-            yaxis_title=r"$RMS [db]$",
+            yaxis_title="RMS [db]",
         )
         fig.show()
     else:
@@ -247,7 +242,7 @@ def plot_f0(frames, l_, n_,amdf=False,fig=None,subplot_row=1, subplot_col=1):
         )
 
 
-def plot_all(audio, audio_time, frames, l_, n_, N_):
+def plot_all(audio, audio_time, frames, l_, n_, N_, sr_bounds):
     fig = make_subplots(rows=7, cols=1, vertical_spacing=0.05,
                         subplot_titles=("Audio Waveform", "Volume", "Short Time Energy", "Zero Crossing Rate", "Silent Ratio", "Fundamental Frequency","Volume Undulation"))
     
@@ -256,14 +251,23 @@ def plot_all(audio, audio_time, frames, l_, n_, N_):
     plot_audio(audio, audio_time, fig=fig, subplot_row=1, subplot_col=1)
     plot_volumes(frames, n_, N_, fig=fig, subplot_row=2, subplot_col=1)
     plot_ste(frames, n_, N_, fig=fig, subplot_row=3, subplot_col=1)
-    plot_zcr(frames, n_, fig=fig, subplot_row=4, subplot_col=1)
-    plot_sr(frames, n_, N_, fig=fig, subplot_row=5, subplot_col=1)
-    plot_f0(frames, l_, n_, fig=fig, subplot_row=6, subplot_col=1)
+    plot_zcr(frames, n_,N_, fig=fig, subplot_row=4, subplot_col=1)
+    plot_sr(frames, n_, N_, fig=fig, subplot_row=5, subplot_col=1, bounds=sr_bounds)
+    plot_f0(frames, l_, n_, fig=fig, subplot_row=6, subplot_col=1, amdf=False)
     plot_vu(frames, n_, fig=fig, subplot_row=7, subplot_col=1)
     fig.layout.xaxis.update(title="Time (s)")
     fig.layout.yaxis.update(title="Amplitude")
     fig.layout.xaxis2.update(title="Frames")
     fig.layout.yaxis2.update(title="Volume (dB)")
+    fig.layout.xaxis3.update(title="Frames")
+    # fig.layout.yaxis2.update(title="Volume (dB)")
+    fig.layout.xaxis4.update(title="Frames")
+    # fig.layout.yaxis2.update(title="Volume (dB)")
+    fig.layout.xaxis5.update(title="Frames")
+    # fig.layout.yaxis2.update(title="Volume (dB)")
+    fig.layout.xaxis6.update(title="Frames")
+    fig.layout.xaxis7.update(title="Frames")
+    
     fig.show()
 
 
@@ -291,8 +295,8 @@ def get_energy_entropy(frames):
     return -np.sum(energy_dist * np.log2(energy_dist))
 
 
-def get_zstd(frames):
-    zcr_values = np.apply_along_axis(get_zcr, axis=1, arr=frames)
+def get_zstd(frames,N_):
+    zcr_values = np.apply_along_axis(get_zcr, axis=1, arr=frames,N_=N_)
     zcr_std = np.std(zcr_values)
     return zcr_std
 
@@ -307,7 +311,7 @@ def print_info(audio,audio_time,frame_rate,frames,n_,N_):
     print(f"VSTD: {np.format_float_positional(get_vstd(audio),precision=4)}")
     print(f"VDR: {np.format_float_positional(get_vdr(audio),precision=4)}")
     print(f"Energy entropy: {np.format_float_positional(get_energy_entropy(frames),precision=4)}")
-    print(f"ZSTD: {np.format_float_positional(get_zstd(frames),precision=4)}")
+    print(f"ZSTD: {np.format_float_positional(get_zstd(frames,N_),precision=4)}")
     
 
 
@@ -329,7 +333,7 @@ def get_lstr(frame_sec,frame_rate, percent_frame_size,percent_hop_length):
 def plot_lstr(audio, frame_rate, percent_frame_size,percent_hop_length):
     frames_sec = split_to_sec_frames(audio, frame_rate)
     lstr = []
-    for frame_sec in frames_sec:
+    for frame_sec in frames_sec[:-1]:
         lstr.append(get_lstr(frame_sec,frame_rate, percent_frame_size,percent_hop_length))
     fig = make_subplots(rows=1, cols=1)
     fig.add_trace(
@@ -346,14 +350,14 @@ def plot_lstr(audio, frame_rate, percent_frame_size,percent_hop_length):
 
 def get_hzcrr(frame_sec,frame_rate, percent_frame_size,percent_hop_length):
     frames, n_, N_ = split_to_frames(frame_sec, frame_rate, percent_frame_size,percent_hop_length)
-    zcrs = np.apply_along_axis(get_zcr, 1, frames)
+    zcrs = np.apply_along_axis(get_zcr, 1, frames, N_=N_)
     zcr_mean = np.mean(zcrs)
     return np.sum((1.5*zcr_mean < zcrs)+1)/(2*len(frame_sec))
 
 def plot_hzcrr(audio, frame_rate, percent_frame_size,percent_hop_length):
     frames_sec = split_to_sec_frames(audio, frame_rate)
     hzcrr = []
-    for frame_sec in frames_sec:
+    for frame_sec in frames_sec[:-1]:
         hzcrr.append(get_hzcrr(frame_sec,frame_rate, percent_frame_size,percent_hop_length))
     fig = make_subplots(rows=1, cols=1)
     fig.add_trace(
@@ -377,7 +381,7 @@ def plot_hzcrr(audio, frame_rate, percent_frame_size,percent_hop_length):
     
 def plot_spectrum(audio, audio_time, frame_rate):
     plt.figure(figsize=(10, 6))
-    plt.specgram(audio, Fs=frame_rate, vmin=0)
+    plt.specgram(audio, Fs=frame_rate)
     plt.title('Audio spectrogram')
     plt.ylabel('Amplitude')
     plt.xlabel('Time (s)')
