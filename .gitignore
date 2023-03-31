@@ -1,3 +1,4 @@
 *.aup3
 *.zip
 docs
+__pycache__
