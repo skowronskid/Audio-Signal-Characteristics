@@ -183,7 +183,33 @@ def plot_sr(frames, n_, N_ ,fig=None,subplot_row=1, subplot_col=1):
             go.Scatter(x=np.arange(0,n_), y=sr, mode='lines'),
             row = subplot_row, col = subplot_col
         )
-    
+        
+        
+def get_vu(frames):
+    rms = np.sqrt(np.mean(np.square(frames), axis=1))
+    rms_db = 20 * np.log10(rms)
+    return rms_db
+
+
+def plot_vu(frames,n_, fig=None,subplot_row=1, subplot_col=1):
+    vu = get_vu(frames)
+    if fig is None:
+        fig = make_subplots(rows=1, cols=1)
+        fig.add_trace(
+            go.Scatter(x=np.arange(0,n_), y=vu, mode='lines'),
+        )
+
+        fig.update_layout(
+            title="Volume undulation",
+            xaxis_title="Frame number",
+            yaxis_title=r"$RMS [db]$",
+        )
+        fig.show()
+    else:
+        fig.add_trace(
+            go.Scatter(x=np.arange(0,n_), y=vu, mode='lines'),
+            row=   subplot_row, col=   subplot_col
+        )
     
 
 def get_f0(audio, l_,amdf=False):
@@ -222,8 +248,8 @@ def plot_f0(frames, l_, n_,amdf=False,fig=None,subplot_row=1, subplot_col=1):
 
 
 def plot_all(audio, audio_time, frames, l_, n_, N_):
-    fig = make_subplots(rows=6, cols=1, vertical_spacing=0.05,
-                        subplot_titles=("Audio Waveform", "Volume", "Short Time Energy", "Zero Crossing Rate", "Silent Ratio", "Fundamental Frequency"))
+    fig = make_subplots(rows=7, cols=1, vertical_spacing=0.05,
+                        subplot_titles=("Audio Waveform", "Volume", "Short Time Energy", "Zero Crossing Rate", "Silent Ratio", "Fundamental Frequency","Volume Undulation"))
     
     fig.update_layout(height=1800,showlegend=False)
     
@@ -233,7 +259,7 @@ def plot_all(audio, audio_time, frames, l_, n_, N_):
     plot_zcr(frames, n_, fig=fig, subplot_row=4, subplot_col=1)
     plot_sr(frames, n_, N_, fig=fig, subplot_row=5, subplot_col=1)
     plot_f0(frames, l_, n_, fig=fig, subplot_row=6, subplot_col=1)
-
+    plot_vu(frames, n_, fig=fig, subplot_row=7, subplot_col=1)
     fig.layout.xaxis.update(title="Time (s)")
     fig.layout.yaxis.update(title="Amplitude")
     fig.layout.xaxis2.update(title="Frames")
@@ -259,7 +285,19 @@ def get_vdr(audio):
     return (np.max(audio) - np.min(audio))/np.max(audio)
 
 
-def print_info(audio,audio_time,frame_rate,n_,N_):
+def get_energy_entropy(frames):
+    energy = np.sum(np.square(frames), axis=1)
+    energy_dist = energy / np.sum(energy)
+    return -np.sum(energy_dist * np.log2(energy_dist))
+
+
+def get_zstd(frames):
+    zcr_values = np.apply_along_axis(get_zcr, axis=1, arr=frames)
+    zcr_std = np.std(zcr_values)
+    return zcr_std
+
+
+def print_info(audio,audio_time,frame_rate,frames,n_,N_):
     print(f"Audio length: {np.format_float_positional(audio_time,2)} s")
     print(f"Frame rate: {frame_rate} Hz")
     print(f"Number of frames: {n_}")
@@ -268,6 +306,8 @@ def print_info(audio,audio_time,frame_rate,n_,N_):
     print(f"Avarege amplitude: {np.format_float_positional(get_avg_amplitue(audio), precision=1)}")
     print(f"VSTD: {np.format_float_positional(get_vstd(audio),precision=4)}")
     print(f"VDR: {np.format_float_positional(get_vdr(audio),precision=4)}")
+    print(f"Energy entropy: {np.format_float_positional(get_energy_entropy(frames),precision=4)}")
+    print(f"ZSTD: {np.format_float_positional(get_zstd(frames),precision=4)}")
     
 
 
@@ -327,6 +367,7 @@ def plot_hzcrr(audio, frame_rate, percent_frame_size,percent_hop_length):
     )
     fig.show()
     
+
     
     
 
