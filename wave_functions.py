@@ -1,3 +1,4 @@
+from sys import displayhook
 import wave
 import numpy as np
 from IPython.display import Audio
@@ -17,7 +18,7 @@ def read_wave(path):
         audio = np.frombuffer(samples, dtype=np.int16).astype(np.float32) / 32767.0
     
     audio_time  = n_samples/frame_rate #in seconds
-    display(Audio(data=audio, rate=frame_rate))
+    displayhook(Audio(data=audio, rate=frame_rate))
     return audio, frame_rate, audio_time, n_samples
 
 def split_to_frames(audio, frame_rate, percent_frame_size=0.1, percent_hop_length=0.5):
