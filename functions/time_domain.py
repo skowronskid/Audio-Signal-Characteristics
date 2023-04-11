@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 
 
+
 # Read and split the audio file into frames
 
 def read_wave(path):
@@ -389,3 +390,7 @@ def plot_spectrum(audio, audio_time, frame_rate):
     plt.xlim(0, audio_time)
     plt.colorbar()
     plt.show()
+    
+    
+
+    
