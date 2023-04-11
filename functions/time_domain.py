@@ -16,7 +16,7 @@ def read_wave(path):
         frame_rate = wav_file.getframerate()
         n_samples = wav_file.getnframes()
         samples = wav_file.readframes(n_samples)
-        audio = np.frombuffer(samples, dtype=np.int16).astype(np.float32) / 32767.0
+        audio = np.frombuffer(samples, dtype=np.int16).astype(np.float32)/32768
     
     audio_time  = n_samples/frame_rate #in seconds
     displayhook(Audio(data=audio, rate=frame_rate))
@@ -88,8 +88,8 @@ def plot_volumes(frames, n_,N_, fig=None,subplot_row=1, subplot_col=1):
 
         fig.update_layout(
             title="Volume of audio frames",
-            xaxis_title="Frame number",
-            yaxis_title="Volume (dB)"
+            xaxis_title="Frame index",
+            yaxis_title="Volume"
         )
         fig.show()
     else:
@@ -116,8 +116,8 @@ def plot_ste(frames, n_,N_, fig=None,subplot_row=1, subplot_col=1):
 
         fig.update_layout(
             title="Short Time Energy of audio frames",
-            xaxis_title="Frame number",
-            yaxis_title="Short Time Energy (dB^2)"
+            xaxis_title="Frame index",
+            yaxis_title="Short Time Energy"
         )
         fig.show()
     else:
@@ -141,7 +141,7 @@ def plot_zcr(frames, n_,N_, fig=None,subplot_row=1, subplot_col=1):
 
         fig.update_layout(
             title="Zero Crossing Rate of audio frames",
-            xaxis_title="Frame number",
+            xaxis_title="Frame index",
         )
         fig.show()
     else:
@@ -172,7 +172,7 @@ def plot_sr(frames, n_, N_, bounds=[0.1,0.1],fig=None,subplot_row=1, subplot_col
 
         fig.update_layout(
             title="Silent Ratio of audio frames",
-            xaxis_title="Frame number",
+            xaxis_title="Frame index",
         )
         fig.show()
     else:
@@ -198,7 +198,7 @@ def plot_vu(frames,n_, fig=None,subplot_row=1, subplot_col=1):
 
         fig.update_layout(
             title="Volume undulation",
-            xaxis_title="Frame number",
+            xaxis_title="Frame index",
             yaxis_title="RMS [db]",
         )
         fig.show()
@@ -233,7 +233,7 @@ def plot_f0(frames, l_, n_,amdf=False,fig=None,subplot_row=1, subplot_col=1):
 
         fig.update_layout(
             title="Fundamental frequency of audio frames",
-            xaxis_title="Frame number",
+            xaxis_title="Frame index",
         )
         fig.show()
         
@@ -258,17 +258,15 @@ def plot_all(audio, audio_time, frames, l_, n_, N_, sr_bounds):
     plot_f0(frames, l_, n_, fig=fig, subplot_row=6, subplot_col=1, amdf=False)
     plot_vu(frames, n_, fig=fig, subplot_row=7, subplot_col=1)
     fig.layout.xaxis.update(title="Time (s)")
-    fig.layout.yaxis.update(title="Amplitude")
-    fig.layout.xaxis2.update(title="Frames")
-    fig.layout.yaxis2.update(title="Volume (dB)")
-    fig.layout.xaxis3.update(title="Frames")
+    fig.layout.xaxis2.update(title="Frame index")
+    fig.layout.xaxis3.update(title="FraFrame indexmes")
     # fig.layout.yaxis2.update(title="Volume (dB)")
-    fig.layout.xaxis4.update(title="Frames")
+    fig.layout.xaxis4.update(title="Frame index")
     # fig.layout.yaxis2.update(title="Volume (dB)")
-    fig.layout.xaxis5.update(title="Frames")
+    fig.layout.xaxis5.update(title="Frame index")
     # fig.layout.yaxis2.update(title="Volume (dB)")
-    fig.layout.xaxis6.update(title="Frames")
-    fig.layout.xaxis7.update(title="Frames")
+    fig.layout.xaxis6.update(title="Frame index")
+    fig.layout.xaxis7.update(title="Frame index")
     
     fig.show()
 
