@@ -106,7 +106,7 @@ def visualise_volume(fft_frames,n_, N_, in_db=False, spl=True, fig=None, subplot
 def visualise_all(frames,frame_rate, n_, N_, window_type=None, in_db=False, spl=True):
     fft_frames = transform_frames_to_frequency_domain(frames, frame_rate, N_, window_type=window_type)
     fig = make_subplots(rows=2, cols=1, vertical_spacing=0.05,
-                        subplot_titles=("Frames in Time Domain", "Frames in Frequency Domain"))
+                        subplot_titles=("Frames in Frequency Domain", "Volume"))
     
     fig.update_layout(height=1800,showlegend=True)
     
