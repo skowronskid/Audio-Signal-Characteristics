@@ -1,5 +1,6 @@
 import scipy.signal as signal
 import scipy.fft as fft
+from scipy.stats import gmean
 import numpy as np
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
@@ -161,9 +162,9 @@ def visualise_effective_bandwidths(fft_frames, frame_rate, N_, n_, fig=None, sub
             name='effective_bandwidths'
         ))
         fig.update_layout(
-            title='Frequency Centroid of each frame',
+            title='Effective Bandwidth of each frame',
             xaxis_title='Frame index',
-            yaxis_title='Frequency centroid (Hz)',
+            yaxis_title='Spread (Hz)',
         )
         fig.show()
     else:
@@ -173,14 +174,76 @@ def visualise_effective_bandwidths(fft_frames, frame_rate, N_, n_, fig=None, sub
         )
 
 
+def compute_spectral_flatness(magnitude,N_):
+    mag = magnitude[:N_//2]
+    return gmean(mag)/np.mean(mag)
 
+
+
+
+def visualise_spectral_flatness(fft_frames, frame_rate, N_, n_, fig=None, subplot_row=1, subplot_col=1):
+    magnitude_spectrum = np.abs(fft_frames)    
+    spectral_flatness_vector = np.apply_along_axis(compute_spectral_flatness,1, magnitude_spectrum,N_)
+    
+    if fig is None:
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=np.arange(n_),
+            y=spectral_flatness_vector,
+            mode='lines',
+            name='effective_bandwidths'
+        ))
+        fig.update_layout(
+            title='Spectral Flatness of each frame',
+            xaxis_title='Frame index',
+            yaxis_title='Flatness',
+        )
+        fig.show()
+    else:
+        fig.add_trace(
+            go.Scatter(x=np.arange(n_), y=spectral_flatness_vector, mode='lines', name='spectral_flatness'),
+            row=subplot_row, col=subplot_col
+        )
+
+
+
+
+def compute_spectral_crest(magnitude,N_):
+    mag = magnitude[:N_//2]
+    return np.max(mag)/np.sum(mag)
+
+
+
+def visualise_spectral_crest(fft_frames, frame_rate, N_, n_, fig=None, subplot_row=1, subplot_col=1):
+    magnitude_spectrum = np.abs(fft_frames)    
+    spectral_crests = np.apply_along_axis(compute_spectral_crest,1, magnitude_spectrum,N_)
+    
+    if fig is None:
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=np.arange(n_),
+            y=spectral_crests,
+            mode='lines',
+            name='spectral_crests'
+        ))
+        fig.update_layout(
+            title='Spectral Crest of each frame',
+            xaxis_title='Frame index',
+            yaxis_title='Crest',
+        )
+        fig.show()
+    else:
+        fig.add_trace(
+            go.Scatter(x=np.arange(n_), y=spectral_crests, mode='lines', name='spectral_crests'),
+            row=subplot_row, col=subplot_col
+        )
 
 
 
 def visualise_all(frames,frame_rate, n_, N_, window_type=None, in_db=False, spl=True):
     fft_frames = transform_frames_to_frequency_domain(frames, frame_rate, N_, window_type=window_type)
-    fig = make_subplots(rows=4, cols=1, vertical_spacing=0.05,
-                        subplot_titles=("Frames in Frequency Domain", "Volume", "Frequency Centroids", "Effective Bandwidths"))
+    fig = make_subplots(rows=6, cols=1, vertical_spacing=0.05,
+                        subplot_titles=("Frames in Frequency Domain", "Volume", "Frequency Centroids", "Effective Bandwidths", "Spectral Flatness Measure","Spectral Crest Factor"))
     
     fig.update_layout(height=1800,showlegend=True)
     
@@ -188,17 +251,30 @@ def visualise_all(frames,frame_rate, n_, N_, window_type=None, in_db=False, spl=
     visualise_volume(fft_frames,n_, N_, in_db=in_db, spl=spl, fig=fig, subplot_row=2, subplot_col=1)
     visualise_frequency_centroids(fft_frames, frame_rate, N_, n_, fig=fig, subplot_row=3, subplot_col=1)
     visualise_effective_bandwidths(fft_frames, frame_rate, N_, n_, fig=fig, subplot_row=4, subplot_col=1)   
+    visualise_spectral_flatness(fft_frames, frame_rate, N_, n_, fig=fig, subplot_row=5, subplot_col=1)
+    visualise_spectral_crest(fft_frames, frame_rate, N_, n_, fig=fig, subplot_row=6, subplot_col=1)
+
 
     fig.layout.xaxis.update(title="Frequency (Hz)")
     fig.layout.yaxis.update(title="Magnitude")
+    
     fig.layout.xaxis2.update(title="Frame index")
+    if in_db or spl:
+        fig.layout.yaxis2.update(title="Volume (dB)")
+        
     fig.layout.yaxis3.update(title="Frequency centroid (Hz)")
     fig.layout.xaxis3.update(title="Frame index")
+    
     fig.layout.yaxis4.update(title="Spread (Hz)")
     fig.layout.xaxis4.update(title="Frame index")
     
-    if in_db or spl:
-        fig.layout.yaxis2.update(title="Volume (dB)")
+    fig.layout.yaxis5.update(title="Flatness")
+    fig.layout.xaxis5.update(title="Frame index")   
+        
+    fig.layout.yaxis6.update(title="Crest")
+    fig.layout.xaxis6.update(title="Frame index")   
+    
+
     fig.show()
             
         
