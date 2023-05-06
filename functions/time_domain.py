@@ -259,7 +259,7 @@ def plot_all(audio, audio_time, frames, l_, n_, N_, sr_bounds):
     plot_vu(frames, n_, fig=fig, subplot_row=7, subplot_col=1)
     fig.layout.xaxis.update(title="Time (s)")
     fig.layout.xaxis2.update(title="Frame index")
-    fig.layout.xaxis3.update(title="FraFrame indexmes")
+    fig.layout.xaxis3.update(title="Frame index")
     # fig.layout.yaxis2.update(title="Volume (dB)")
     fig.layout.xaxis4.update(title="Frame index")
     # fig.layout.yaxis2.update(title="Volume (dB)")

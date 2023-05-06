@@ -34,10 +34,7 @@ def transform_frames_to_frequency_domain(frames, frame_rate,N_, window_type=None
 
 
 def visualise_frames(fft_frames, frame_rate,n_, N_, fig=None, subplot_row=1, subplot_col=1):
-        # Calculate magnitude spectrum
     magnitude_spectrum = np.abs(fft_frames)
-
-    # Generate frequency axis
     freq_axis = np.fft.fftfreq(N_, d=1/frame_rate)[:N_//2]
 
     # Create a subplot for each frame
@@ -99,23 +96,107 @@ def visualise_volume(fft_frames,n_, N_, in_db=False, spl=True, fig=None, subplot
         )
         
 
+def compute_frequency_centroid(magnitude, freq_axis, N_):
+    '''
+    also called spectral centroid
+    np.corrcoef(frequency_centroids,zcr)
+    array([[1.        , 0.80297413],
+        [0.80297413, 1.        ]])
+        
+    wyszła duża korelacja z zcr tak jak powinno być, więc może jest dobrze
+    '''
+    mag = magnitude[:N_//2]
+    return np.sum(mag*freq_axis)/np.sum(mag)
+
+
+
+def visualise_frequency_centroids(fft_frames, frame_rate, N_, n_, fig=None, subplot_row=1, subplot_col=1):
+    magnitude_spectrum = np.abs(fft_frames)
+    freq_axis = np.fft.fftfreq(N_, d=1/frame_rate)[:N_//2]
+    frequency_centroids = np.apply_along_axis(compute_frequency_centroid,1, magnitude_spectrum, freq_axis=freq_axis, N_=N_)
+    
+    
+    if fig is None:
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=np.arange(n_),
+            y=frequency_centroids,
+            mode='lines',
+            name='frequency_centroids'
+        ))
+        fig.update_layout(
+            title='Frequency Centroid of each frame',
+            xaxis_title='Frame index',
+            yaxis_title='Frequency centroid (Hz)',
+        )
+        fig.show()
+    else:
+        fig.add_trace(
+            go.Scatter(x=np.arange(n_), y=frequency_centroids, mode='lines', name='frequency_centroids'),
+            row=subplot_row, col=subplot_col
+        )
+
+
+
+
+def compute_effective_bandwidth(magnitude, freq_axis, N_):
+    # also called spectral spread
+    frequency_centroid = compute_frequency_centroid(magnitude, freq_axis, N_)
+    mag = magnitude[:N_//2]
+    return np.sqrt(np.sum(mag*(freq_axis-frequency_centroid)**2)/np.sum(mag))
+
+
+def visualise_effective_bandwidths(fft_frames, frame_rate, N_, n_, fig=None, subplot_row=1, subplot_col=1):
+    magnitude_spectrum = np.abs(fft_frames)
+    freq_axis = np.fft.fftfreq(N_, d=1/frame_rate)[:N_//2]
+    effective_bandwidths = np.apply_along_axis(compute_effective_bandwidth,1, magnitude_spectrum, freq_axis=freq_axis, N_=N_)
+    
+    
+    if fig is None:
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=np.arange(n_),
+            y=effective_bandwidths,
+            mode='lines',
+            name='effective_bandwidths'
+        ))
+        fig.update_layout(
+            title='Frequency Centroid of each frame',
+            xaxis_title='Frame index',
+            yaxis_title='Frequency centroid (Hz)',
+        )
+        fig.show()
+    else:
+        fig.add_trace(
+            go.Scatter(x=np.arange(n_), y=effective_bandwidths, mode='lines', name='effective_bandwidths'),
+            row=subplot_row, col=subplot_col
+        )
+
+
 
 
 
 
 def visualise_all(frames,frame_rate, n_, N_, window_type=None, in_db=False, spl=True):
     fft_frames = transform_frames_to_frequency_domain(frames, frame_rate, N_, window_type=window_type)
-    fig = make_subplots(rows=2, cols=1, vertical_spacing=0.05,
-                        subplot_titles=("Frames in Frequency Domain", "Volume"))
+    fig = make_subplots(rows=4, cols=1, vertical_spacing=0.05,
+                        subplot_titles=("Frames in Frequency Domain", "Volume", "Frequency Centroids", "Effective Bandwidths"))
     
     fig.update_layout(height=1800,showlegend=True)
     
     visualise_frames(fft_frames, frame_rate, n_, N_, fig=fig, subplot_row=1, subplot_col=1)
     visualise_volume(fft_frames,n_, N_, in_db=in_db, spl=spl, fig=fig, subplot_row=2, subplot_col=1)
+    visualise_frequency_centroids(fft_frames, frame_rate, N_, n_, fig=fig, subplot_row=3, subplot_col=1)
+    visualise_effective_bandwidths(fft_frames, frame_rate, N_, n_, fig=fig, subplot_row=4, subplot_col=1)   
 
     fig.layout.xaxis.update(title="Frequency (Hz)")
     fig.layout.yaxis.update(title="Magnitude")
     fig.layout.xaxis2.update(title="Frame index")
+    fig.layout.yaxis3.update(title="Frequency centroid (Hz)")
+    fig.layout.xaxis3.update(title="Frame index")
+    fig.layout.yaxis4.update(title="Spread (Hz)")
+    fig.layout.xaxis4.update(title="Frame index")
+    
     if in_db or spl:
         fig.layout.yaxis2.update(title="Volume (dB)")
     fig.show()
