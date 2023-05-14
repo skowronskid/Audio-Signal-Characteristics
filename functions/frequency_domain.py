@@ -239,13 +239,80 @@ def visualise_spectral_crest(fft_frames, frame_rate, N_, n_, fig=None, subplot_r
         )
 
 
+def compute_band_energy_ratio(frame_magnitude, freq_axis, N_):
+    band_1_2_sep = 630
+    band_2_3_sep = 1720
+    band_3_4_sep = 4400
+    mag = frame_magnitude[:N_//2]
+    band_1_energy = np.sum(mag[freq_axis<band_1_2_sep]**2)
+    band_2_energy = np.sum(mag[(freq_axis>=band_1_2_sep) & (freq_axis<band_2_3_sep)]**2)
+    band_3_energy = np.sum(mag[(freq_axis>=band_2_3_sep) & (freq_axis<band_3_4_sep)]**2)
+    full_energy = np.sum(mag**2)
+    return band_1_energy/full_energy, band_2_energy/full_energy, band_3_energy/full_energy
+    
+    
+    
+def visualise_band_energy_ratio(fft_frames, frame_rate, N_, n_, fig=None, subplot_row=1, subplot_col=1):
+    magnitude_spectrum = np.abs(fft_frames)
+    freq_axis = np.fft.fftfreq(N_, d=1/frame_rate)[:N_//2]
+    ratios_matrix = np.apply_along_axis(compute_band_energy_ratio,1, magnitude_spectrum, freq_axis=freq_axis, N_=N_)
+    ratio_1 = ratios_matrix[:,0]
+    ratio_2 = ratios_matrix[:,1]
+    ratio_3 = ratios_matrix[:,2]
+    
+    if fig is None:
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=np.arange(n_),
+            y=ratio_1,
+            mode='lines',
+            name='ERSB1'
+        ))
+        fig.add_trace(go.Scatter(
+            x=np.arange(n_),
+            y=ratio_2,
+            mode='lines',
+            name='ERSB2'
+        ))
+        fig.add_trace(go.Scatter(
+            x=np.arange(n_),
+            y=ratio_3,
+            mode='lines',
+            name='ERSB3'
+        ))
+        
+        
+
+        fig.update_layout(
+            title='Band Energy Ratio',
+            xaxis_title='Frame index',
+            yaxis_title='Ratio',
+        )
+        fig.show()
+    else:
+        fig.add_trace(
+            go.Scatter(x=np.arange(n_), y=ratio_1, mode='lines', name='ERSB1'),
+            row=subplot_row, col=subplot_col
+        )
+        fig.add_trace(
+            go.Scatter(x=np.arange(n_), y=ratio_2, mode='lines', name='ERSB2'),
+            row=subplot_row, col=subplot_col
+        )
+        fig.add_trace(
+            go.Scatter(x=np.arange(n_), y=ratio_3, mode='lines', name='ERSB3'),
+            row=subplot_row, col=subplot_col
+        )
+
+
+
+
 
 def visualise_all(frames,frame_rate, n_, N_, window_type=None, in_db=False, spl=True):
     fft_frames = transform_frames_to_frequency_domain(frames, frame_rate, N_, window_type=window_type)
-    fig = make_subplots(rows=6, cols=1, vertical_spacing=0.05,
-                        subplot_titles=("Frames in Frequency Domain", "Volume", "Frequency Centroids", "Effective Bandwidths", "Spectral Flatness Measure","Spectral Crest Factor"))
+    fig = make_subplots(rows=7, cols=1, vertical_spacing=0.05,
+                        subplot_titles=("Frames in Frequency Domain", "Volume", "Frequency Centroids", "Effective Bandwidths", "Spectral Flatness Measure","Spectral Crest Factor","Band Energy Ratio"))
     
-    fig.update_layout(height=1800,showlegend=True)
+    fig.update_layout(height=2000,showlegend=True)
     
     visualise_frames(fft_frames, frame_rate, n_, N_, fig=fig, subplot_row=1, subplot_col=1)
     visualise_volume(fft_frames,n_, N_, in_db=in_db, spl=spl, fig=fig, subplot_row=2, subplot_col=1)
@@ -253,7 +320,7 @@ def visualise_all(frames,frame_rate, n_, N_, window_type=None, in_db=False, spl=
     visualise_effective_bandwidths(fft_frames, frame_rate, N_, n_, fig=fig, subplot_row=4, subplot_col=1)   
     visualise_spectral_flatness(fft_frames, frame_rate, N_, n_, fig=fig, subplot_row=5, subplot_col=1)
     visualise_spectral_crest(fft_frames, frame_rate, N_, n_, fig=fig, subplot_row=6, subplot_col=1)
-
+    visualise_band_energy_ratio(fft_frames, frame_rate, N_, n_, fig=fig, subplot_row=7, subplot_col=1)
 
     fig.layout.xaxis.update(title="Frequency (Hz)")
     fig.layout.yaxis.update(title="Magnitude")
@@ -274,6 +341,9 @@ def visualise_all(frames,frame_rate, n_, N_, window_type=None, in_db=False, spl=
     fig.layout.yaxis6.update(title="Crest")
     fig.layout.xaxis6.update(title="Frame index")   
     
+    
+    fig.layout.yaxis7.update(title="Ratio")
+    fig.layout.xaxis7.update(title="Frame index")   
 
     fig.show()
             
