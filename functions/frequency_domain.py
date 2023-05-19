@@ -4,6 +4,8 @@ from scipy.stats import gmean
 import numpy as np
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
+import matplotlib.pyplot as plt
+from functions.time_domain import read_wave, split_to_frames
 
 def transform_frames_to_frequency_domain(frames, frame_rate,N_, window_type=None):
     # there are many available windowing functions in scipy.signal.windows, some of which are:
@@ -348,3 +350,29 @@ def visualise_all(frames,frame_rate, n_, N_, window_type=None, in_db=False, spl=
     fig.show()
             
         
+        
+def visualise_spectrogram(path,percent_frame_size,percent_hop_length, window_type='hann',figsize=None,time_in_frames=False,log_amplitude=False):
+    # it's not a mel spectrogram
+    audio, frame_rate, audio_time, n_samples  = read_wave(path,display=False)
+    frames, n_, N_= split_to_frames(audio, frame_rate, percent_frame_size=percent_frame_size, percent_hop_length=percent_hop_length)
+    fft_frames = transform_frames_to_frequency_domain(frames, frame_rate, N_, window_type='hann')
+    magnitude_spectrum = np.abs(fft_frames)[:, :N_//2]
+    if log_amplitude:
+        magnitude_spectrum = 10*np.log10(magnitude_spectrum.T)
+    if figsize is None:
+        figsize = (15,10)
+    plt.figure(figsize=figsize)
+    plt_mag = plt.imshow(magnitude_spectrum, origin='lower',aspect='auto')
+    plt.yticks(np.round(np.linspace(0, N_//2, 10),3), np.array(np.round(np.linspace(0, frame_rate/2, 10),2),dtype=int))
+    plt.ylabel('Frequency [Hz]')
+    if time_in_frames:
+        plt.xlabel('Frames')
+    else:
+        plt.xlabel('Time [s]')
+        plt.xlim(0, audio_time)
+        labels = np.linspace(0, audio_time, 10)
+        str_labels = [f'{num:.1f}' for num in np.around(labels, decimals=1)]
+        plt.xticks(np.linspace(0,n_-1,10),labels= str_labels)
+    plt.colorbar()
+    plt.show()
+    

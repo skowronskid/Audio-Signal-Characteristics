@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 # Read and split the audio file into frames
 
-def read_wave(path):
+def read_wave(path, display=True):
     with wave.open(path, 'rb') as wav_file:
         frame_rate = wav_file.getframerate()
         n_samples = wav_file.getnframes()
@@ -19,7 +19,8 @@ def read_wave(path):
         audio = np.frombuffer(samples, dtype=np.int16).astype(np.float32)/32768
     
     audio_time  = n_samples/frame_rate #in seconds
-    displayhook(Audio(data=audio, rate=frame_rate))
+    if display:
+        displayhook(Audio(data=audio, rate=frame_rate))
     return audio, frame_rate, audio_time, n_samples
 
 def split_to_frames(audio, frame_rate, percent_frame_size=0.1, percent_hop_length=0.5):
