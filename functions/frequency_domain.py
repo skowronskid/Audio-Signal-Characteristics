@@ -114,7 +114,7 @@ def visualise_all(frames, frame_rate, n_, N_, window_type=None, in_db=False, spl
     fig.show()
 
 
-def find_base_frequency(signal, sampling_frequency, min_freq=50, max_freq=400):
+def compute_base_frequency(signal, sampling_frequency, min_freq=50, max_freq=400):
     real_cepstrum = np.real(np.fft.ifft(np.log(np.abs(np.fft.fft(signal)))))
     min_quefrency = int(sampling_frequency / max_freq)
     max_quefrency = int(sampling_frequency / min_freq)
@@ -125,7 +125,7 @@ def find_base_frequency(signal, sampling_frequency, min_freq=50, max_freq=400):
 
 
 def visualise_ceps(audio, frame_rate, max_freq, min_freq, fig=None, subplot_row=1, subplot_col=1):
-    ceps, base_freq = find_base_frequency(audio, frame_rate)
+    ceps, base_freq = compute_base_frequency(audio, frame_rate)
     if fig is None:
         fig = go.Figure()
         fig.add_trace(go.Scatter(
@@ -146,29 +146,30 @@ def visualise_ceps(audio, frame_rate, max_freq, min_freq, fig=None, subplot_row=
             row=subplot_row, col=subplot_col
         )
     print(base_freq)
-
-
-def spectrogram(frames: np.ndarray, frame_rate: int, n_: int, N_: int) -> None:
-    fft_frames: np.ndarray = transform_frames_to_frequency_domain(frames, frame_rate, N_)
-
-    # Compute power spectral density
-    power_spectral_density = np.abs(fft_frames) ** 2
-
-    # Convert to decibels
-    power_spectral_density_db = np.apply_along_axis(compute_volume, 1, fft_frames, N_=N_, in_db=False, spl=True)
-
-    # Calculate the time and frequency vectors
-    time_vector = np.arange(frames.shape[0]) * n_ / frame_rate
-    freq_vector = np.arange(N_ // 2) * frame_rate / N_
-
-    # Truncate power_spectral_density_db to half its size (due to symmetry)
-    power_spectral_density_db = power_spectral_density_db[:, :N_ // 2]
-
-    # Plot the spectrogram using seaborn
-    plt.figure(figsize=(12, 6))
-    sns.heatmap(power_spectral_density_db.T, cmap='viridis', xticklabels=False, yticklabels=False)
-    plt.xlabel('Time (frames)')
-    plt.ylabel('Frequency')
-    plt.title('Spectrogram')
+    
+    
+def visualise_spectrogram(path,percent_frame_size,percent_hop_length, window_type='hann',figsize=None,time_in_frames=False,log_amplitude=False):
+    # it's not a mel spectrogram
+    audio, frame_rate, audio_time, n_samples  = read_wave(path,display=False)
+    frames, n_, N_= split_to_frames(audio, frame_rate, percent_frame_size=percent_frame_size, percent_hop_length=percent_hop_length)
+    fft_frames = transform_frames_to_frequency_domain(frames, frame_rate, N_, window_type='hann')
+    magnitude_spectrum = np.abs(fft_frames)[:, :N_//2]
+    if log_amplitude:
+        magnitude_spectrum = 10*np.log10(magnitude_spectrum.T)
+    if figsize is None:
+        figsize = (15,10)
+    plt.figure(figsize=figsize)
+    plt_mag = plt.imshow(magnitude_spectrum, origin='lower',aspect='auto')
+    plt.yticks(np.round(np.linspace(0, N_//2, 10),3), np.array(np.round(np.linspace(0, frame_rate/2, 10),2),dtype=int))
+    plt.ylabel('Frequency [Hz]')
+    if time_in_frames:
+        plt.xlabel('Frames')
+    else:
+        plt.xlabel('Time [s]')
+        plt.xlim(0, audio_time)
+        labels = np.linspace(0, audio_time, 10)
+        str_labels = [f'{num:.1f}' for num in np.around(labels, decimals=1)]
+        plt.xticks(np.linspace(0,n_-1,10),labels= str_labels)
+    plt.colorbar()
     plt.show()
 
