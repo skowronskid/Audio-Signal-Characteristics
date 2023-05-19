@@ -101,7 +101,6 @@ def visualise_all(frames, frame_rate, n_, N_, window_type=None, in_db=False, spl
     fft_frames = transform_frames_to_frequency_domain(frames, frame_rate, N_, window_type=window_type)
     fig = make_subplots(rows=2, cols=1, vertical_spacing=0.05,
                         subplot_titles=("Frames in Frequency Domain", "Volume"))
-
     fig.update_layout(height=1800, showlegend=True)
 
     visualise_frames(fft_frames, frame_rate, n_, N_, fig=fig, subplot_row=1, subplot_col=1)
@@ -113,6 +112,40 @@ def visualise_all(frames, frame_rate, n_, N_, window_type=None, in_db=False, spl
     if in_db or spl:
         fig.layout.yaxis2.update(title="Volume (dB)")
     fig.show()
+
+
+def find_base_frequency(signal, sampling_frequency, min_freq=50, max_freq=400):
+    real_cepstrum = np.real(np.fft.ifft(np.log(np.abs(np.fft.fft(signal)))))
+    min_quefrency = int(sampling_frequency / max_freq)
+    max_quefrency = int(sampling_frequency / min_freq)
+    local_max_quefrency = np.argmax(real_cepstrum[min_quefrency:max_quefrency]) + min_quefrency
+    base_frequency = sampling_frequency / local_max_quefrency
+
+    return real_cepstrum, base_frequency
+
+
+def visualise_ceps(audio, frame_rate, max_freq, min_freq, fig=None, subplot_row=1, subplot_col=1):
+    ceps, base_freq = find_base_frequency(audio, frame_rate)
+    if fig is None:
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=np.arange(min_freq, max_freq - min_freq),
+            y=ceps,
+            mode='lines',
+            name='Cepstrum'
+        ))
+        fig.update_layout(
+            title='Cepstrum of Each Sample',
+            xaxis_title='Sample Index',
+            yaxis_title='Cepstrum',
+        )
+        fig.show()
+    else:
+        fig.add_trace(
+            go.Scatter(x=np.arange(min_freq, max_freq - min_freq), y=ceps, mode='lines', name='Cepstrum'),
+            row=subplot_row, col=subplot_col
+        )
+    print(base_freq)
 
 
 def spectrogram(frames: np.ndarray, frame_rate: int, n_: int, N_: int) -> None:
