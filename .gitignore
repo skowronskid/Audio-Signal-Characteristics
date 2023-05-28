@@ -3,3 +3,15 @@
 docs
 __pycache__
 .ipynb_checkpoints
+recordings/comparison/Nagrania_01/*
+recordings/comparison/Nagrania_02/*
+recordings/comparison/Nagrania_03/*
+recordings/comparison/Nagrania_04/*
+recordings/comparison/Nagrania_05/*
+recordings/comparison/Nagrania_06/*
+recordings/comparison/Nagrania_07/*
+recordings/comparison/Nagrania_08/*
+
+!recordings/comparison/Nagrania_04/1_03
+recordings/comparison/Nagrania_04/1_03/Nieznormalizowane
+
