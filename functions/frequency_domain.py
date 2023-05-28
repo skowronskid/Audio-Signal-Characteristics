@@ -306,15 +306,48 @@ def visualise_band_energy_ratio(fft_frames, frame_rate, N_, n_, fig=None, subplo
         )
 
 
+def compute_base_frequency(frame, sampling_frequency, min_freq=50, max_freq=400):
+    real_cepstrum = np.real(np.fft.ifft(np.log(np.abs(np.fft.fft(frame)))))
+    min_quefrency = int(sampling_frequency / max_freq)
+    max_quefrency = int(sampling_frequency / min_freq)
+    local_max_quefrency = np.argmax(real_cepstrum[min_quefrency:max_quefrency]) + min_quefrency
+    base_frequency = sampling_frequency / local_max_quefrency
 
+    return real_cepstrum, base_frequency
+
+def visualise_base_frequency(frames, frame_rate, N_, n_, fig=None, subplot_row=1, subplot_col=1):
+    base_frequencies = []
+    for frame in frames:
+        _, base_frequency = compute_base_frequency(frame, frame_rate)
+        base_frequencies.append(base_frequency)
+    base_frequencies = np.array(base_frequencies)  
+    if fig is None:
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=np.arange(n_),
+            y=base_frequencies,
+            mode='lines',
+            name='base_frequencies'
+        ))
+        fig.update_layout(
+            title= 'Base frequencies',
+            xaxis_title='Frame index',
+            yaxis_title='Frequency (Hz)',
+        )
+        fig.show()
+    else:
+        fig.add_trace(
+            go.Scatter(x=np.arange(n_), y=base_frequencies, mode='lines', name='base_frequencies'),
+            row=subplot_row, col=subplot_col
+        )
 
 
 def visualise_all(frames,frame_rate, n_, N_, window_type=None, in_db=False, spl=True):
     fft_frames = transform_frames_to_frequency_domain(frames, frame_rate, N_, window_type=window_type)
-    fig = make_subplots(rows=7, cols=1, vertical_spacing=0.05,
-                        subplot_titles=("Frames in Frequency Domain", "Volume", "Frequency Centroids", "Effective Bandwidths", "Spectral Flatness Measure","Spectral Crest Factor","Band Energy Ratio"))
+    fig = make_subplots(rows=8, cols=1, vertical_spacing=0.05,
+                        subplot_titles=("Frames in Frequency Domain", "Volume", "Frequency Centroids", "Effective Bandwidths", "Spectral Flatness Measure","Spectral Crest Factor","Band Energy Ratio","Base Frequencies"))
     
-    fig.update_layout(height=2000,showlegend=True)
+    fig.update_layout(height=2200,showlegend=True)
     
     visualise_frames(fft_frames, frame_rate, n_, N_, fig=fig, subplot_row=1, subplot_col=1)
     visualise_volume(fft_frames,n_, N_, in_db=in_db, spl=spl, fig=fig, subplot_row=2, subplot_col=1)
@@ -323,6 +356,7 @@ def visualise_all(frames,frame_rate, n_, N_, window_type=None, in_db=False, spl=
     visualise_spectral_flatness(fft_frames, frame_rate, N_, n_, fig=fig, subplot_row=5, subplot_col=1)
     visualise_spectral_crest(fft_frames, frame_rate, N_, n_, fig=fig, subplot_row=6, subplot_col=1)
     visualise_band_energy_ratio(fft_frames, frame_rate, N_, n_, fig=fig, subplot_row=7, subplot_col=1)
+    visualise_base_frequency(frames, frame_rate, N_, n_, fig=fig, subplot_row=8, subplot_col=1)
 
     fig.layout.xaxis.update(title="Frequency (Hz)")
     fig.layout.yaxis.update(title="Magnitude")
@@ -347,6 +381,8 @@ def visualise_all(frames,frame_rate, n_, N_, window_type=None, in_db=False, spl=
     fig.layout.yaxis7.update(title="Ratio")
     fig.layout.xaxis7.update(title="Frame index")   
 
+    fig.layout.yaxis8.update(title="Frequency (Hz)")
+    fig.layout.xaxis8.update(title="Frame index")
     fig.show()
             
         
@@ -377,38 +413,42 @@ def visualise_spectrogram(path,percent_frame_size,percent_hop_length, window_typ
     plt.show()
     
 
-def compute_base_frequency(signal, sampling_frequency, min_freq=50, max_freq=400):
-    real_cepstrum = np.real(np.fft.ifft(np.log(np.abs(np.fft.fft(signal)))))
-    min_quefrency = int(sampling_frequency / max_freq)
-    max_quefrency = int(sampling_frequency / min_freq)
-    local_max_quefrency = np.argmax(real_cepstrum[min_quefrency:max_quefrency]) + min_quefrency
-    base_frequency = sampling_frequency / local_max_quefrency
-
-    return real_cepstrum, base_frequency
 
 
-def visualise_ceps(audio, frame_rate, min_freq=50, max_freq=400, fig=None, subplot_row=1, subplot_col=1):
-    ceps, base_freq = compute_base_frequency(audio, frame_rate)
-    actual_ceps = ceps[min_freq:max_freq]
-    if fig is None:
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=np.arange(min_freq, max_freq - min_freq),
-            y=actual_ceps,
-            mode='lines',
-            name='Cepstrum'
-        ))
-        fig.update_layout(
-            title='Cepstrum of Each Sample',
-            xaxis_title='Sample Index',
-            yaxis_title='Cepstrum',
-        )
-        fig.show()
-    else:
-        fig.add_trace(
-            go.Scatter(x=np.arange(min_freq, max_freq - min_freq), y=actual_ceps, mode='lines', name='Cepstrum'),
-            row=subplot_row, col=subplot_col
-        )
-    print(f"Fundamental frequency: {base_freq}")
+# modified to show fundamental frequency
+# 
+# def compute_base_frequency(signal, sampling_frequency, min_freq=50, max_freq=400):
+#     real_cepstrum = np.real(np.fft.ifft(np.log(np.abs(np.fft.fft(signal)))))
+#     min_quefrency = int(sampling_frequency / max_freq)
+#     max_quefrency = int(sampling_frequency / min_freq)
+#     local_max_quefrency = np.argmax(real_cepstrum[min_quefrency:max_quefrency]) + min_quefrency
+#     base_frequency = sampling_frequency / local_max_quefrency
+
+#     return real_cepstrum, base_frequency
+
+
+# def visualise_ceps(audio, frame_rate, min_freq=50, max_freq=400, fig=None, subplot_row=1, subplot_col=1):
+#     ceps, base_freq = compute_base_frequency(audio, frame_rate)
+#     actual_ceps = ceps[min_freq:max_freq]
+#     if fig is None:
+#         fig = go.Figure()
+#         fig.add_trace(go.Scatter(
+#             x=np.arange(min_freq, max_freq - min_freq),
+#             y=actual_ceps,
+#             mode='lines',
+#             name='Cepstrum'
+#         ))
+#         fig.update_layout(
+#             title='Cepstrum of Each Sample',
+#             xaxis_title='Sample Index',
+#             yaxis_title='Cepstrum',
+#         )
+#         fig.show()
+#     else:
+#         fig.add_trace(
+#             go.Scatter(x=np.arange(min_freq, max_freq - min_freq), y=actual_ceps, mode='lines', name='Cepstrum'),
+#             row=subplot_row, col=subplot_col
+#         )
+#     print(f"Fundamental frequency: {base_freq}")
     
     
