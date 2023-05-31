@@ -45,9 +45,13 @@ def split_to_frames(audio, frame_rate, percent_frame_size=0.1, percent_hop_lengt
 
 
 # Plot the audio
-def plot_audio(audio, audio_time, fig=None, subplot_row=1, subplot_col=1):
-    times = np.linspace(0, audio_time, num=audio.shape[0])
+def plot_audio(audio, audio_time, n_=0, fig=None, subplot_row=1, subplot_col=1):
+    if n_ != 0:
+        times = np.linspace(0, n_, num=audio.shape[0])
 
+    else:
+        times = np.linspace(0, audio_time, num=audio.shape[0])
+    
     if fig is None:
         fig = make_subplots(rows=1, cols=1)
         fig.add_trace(
@@ -56,7 +60,7 @@ def plot_audio(audio, audio_time, fig=None, subplot_row=1, subplot_col=1):
 
         fig.update_layout(
             title="Audio Waveform",
-            xaxis_title="Time (s)",
+            xaxis_title="Time (s)" if n_ == 0 else "Frame index",
             yaxis_title="Amplitude"
         )
         fig.show()
@@ -65,7 +69,6 @@ def plot_audio(audio, audio_time, fig=None, subplot_row=1, subplot_col=1):
             go.Scatter(x=times, y=audio, mode='lines'),
             row=subplot_row, col=subplot_col
         )
-
 
 # cechy sygnału w dziedzinie czasu na poziomie ramki
 

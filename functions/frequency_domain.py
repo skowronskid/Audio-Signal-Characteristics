@@ -45,7 +45,7 @@ def visualise_frames(fft_frames, frame_rate,n_, N_, fig=None, subplot_row=1, sub
         fig = go.Figure()
         for i in range(n_):
             fig.add_trace(go.Scatter(x=freq_axis, y=magnitude_spectrum[i][:N_//2],
-                                    mode='lines', name='Frame {}'.format(i+1)))
+                                    mode='lines', name='Frame {}'.format(i)))
 
         # Set plot layout
         fig.update_layout(
@@ -59,7 +59,7 @@ def visualise_frames(fft_frames, frame_rate,n_, N_, fig=None, subplot_row=1, sub
     else:
         for i in range(n_):
             fig.add_trace(go.Scatter(x=freq_axis, y=magnitude_spectrum[i][:N_//2],
-                                    mode='lines', name='Frame {}'.format(i+1)),
+                                    mode='lines', name='Frame {}'.format(i)),
                           row=subplot_row, col=subplot_col
             )
 
@@ -84,7 +84,8 @@ def visualise_volume(fft_frames,n_, N_, in_db=False, spl=True, fig=None, subplot
             x=np.arange(n_),
             y=volumes,
             mode='lines',
-            name='Volume'
+            name='Volume',
+            line=dict(color='brown')
         ))
         fig.update_layout(
             title='Volume of Each Frame',
@@ -94,7 +95,7 @@ def visualise_volume(fft_frames,n_, N_, in_db=False, spl=True, fig=None, subplot
         fig.show()
     else:
         fig.add_trace(
-            go.Scatter(x=np.arange(n_), y=volumes, mode='lines', name='Volume'),
+            go.Scatter(x=np.arange(n_), y=volumes, mode='lines', name='Volume',line=dict(color='brown')),
             row=subplot_row, col=subplot_col
         )
         
@@ -125,7 +126,8 @@ def visualise_frequency_centroids(fft_frames, frame_rate, N_, n_, fig=None, subp
             x=np.arange(n_),
             y=frequency_centroids,
             mode='lines',
-            name='frequency_centroids'
+            name='frequency_centroids',
+            line=dict(color='orange')
         ))
         fig.update_layout(
             title='Frequency Centroid of each frame',
@@ -135,7 +137,7 @@ def visualise_frequency_centroids(fft_frames, frame_rate, N_, n_, fig=None, subp
         fig.show()
     else:
         fig.add_trace(
-            go.Scatter(x=np.arange(n_), y=frequency_centroids, mode='lines', name='frequency_centroids'),
+            go.Scatter(x=np.arange(n_), y=frequency_centroids, mode='lines', name='frequency_centroids',line=dict(color='orange')),
             row=subplot_row, col=subplot_col
         )
 
@@ -161,7 +163,8 @@ def visualise_effective_bandwidths(fft_frames, frame_rate, N_, n_, fig=None, sub
             x=np.arange(n_),
             y=effective_bandwidths,
             mode='lines',
-            name='effective_bandwidths'
+            name='effective_bandwidths',
+            line=dict(color='cyan')
         ))
         fig.update_layout(
             title='Effective Bandwidth of each frame',
@@ -171,7 +174,7 @@ def visualise_effective_bandwidths(fft_frames, frame_rate, N_, n_, fig=None, sub
         fig.show()
     else:
         fig.add_trace(
-            go.Scatter(x=np.arange(n_), y=effective_bandwidths, mode='lines', name='effective_bandwidths'),
+            go.Scatter(x=np.arange(n_), y=effective_bandwidths, mode='lines', name='effective_bandwidths',line=dict(color='cyan')),
             row=subplot_row, col=subplot_col
         )
 
@@ -193,7 +196,8 @@ def visualise_spectral_flatness(fft_frames, frame_rate, N_, n_, fig=None, subplo
             x=np.arange(n_),
             y=spectral_flatness_vector,
             mode='lines',
-            name='effective_bandwidths'
+            name='effective_bandwidths',
+            line=dict(color='yellow')
         ))
         fig.update_layout(
             title='Spectral Flatness of each frame',
@@ -203,7 +207,7 @@ def visualise_spectral_flatness(fft_frames, frame_rate, N_, n_, fig=None, subplo
         fig.show()
     else:
         fig.add_trace(
-            go.Scatter(x=np.arange(n_), y=spectral_flatness_vector, mode='lines', name='spectral_flatness'),
+            go.Scatter(x=np.arange(n_), y=spectral_flatness_vector, mode='lines', name='spectral_flatness',line=dict(color='yellow')),
             row=subplot_row, col=subplot_col
         )
 
@@ -226,7 +230,8 @@ def visualise_spectral_crest(fft_frames, frame_rate, N_, n_, fig=None, subplot_r
             x=np.arange(n_),
             y=spectral_crests,
             mode='lines',
-            name='spectral_crests'
+            name='spectral_crests',
+            line=dict(color='purple')
         ))
         fig.update_layout(
             title='Spectral Crest of each frame',
@@ -236,7 +241,7 @@ def visualise_spectral_crest(fft_frames, frame_rate, N_, n_, fig=None, subplot_r
         fig.show()
     else:
         fig.add_trace(
-            go.Scatter(x=np.arange(n_), y=spectral_crests, mode='lines', name='spectral_crests'),
+            go.Scatter(x=np.arange(n_), y=spectral_crests, mode='lines', name='spectral_crests',line=dict(color='purple')),
             row=subplot_row, col=subplot_col
         )
 
@@ -268,19 +273,22 @@ def visualise_band_energy_ratio(fft_frames, frame_rate, N_, n_, fig=None, subplo
             x=np.arange(n_),
             y=ratio_1,
             mode='lines',
-            name='ERSB1'
+            name='ERSB1',
+            line=dict(color='green')
         ))
         fig.add_trace(go.Scatter(
             x=np.arange(n_),
             y=ratio_2,
             mode='lines',
-            name='ERSB2'
+            name='ERSB2',
+            line=dict(color='blue')
         ))
         fig.add_trace(go.Scatter(
             x=np.arange(n_),
             y=ratio_3,
             mode='lines',
-            name='ERSB3'
+            name='ERSB3',
+            line=dict(color='red')
         ))
         
         
@@ -293,15 +301,15 @@ def visualise_band_energy_ratio(fft_frames, frame_rate, N_, n_, fig=None, subplo
         fig.show()
     else:
         fig.add_trace(
-            go.Scatter(x=np.arange(n_), y=ratio_1, mode='lines', name='ERSB1'),
+            go.Scatter(x=np.arange(n_), y=ratio_1, mode='lines', name='ERSB1',line=dict(color='green')),
             row=subplot_row, col=subplot_col
         )
         fig.add_trace(
-            go.Scatter(x=np.arange(n_), y=ratio_2, mode='lines', name='ERSB2'),
+            go.Scatter(x=np.arange(n_), y=ratio_2, mode='lines', name='ERSB2',line=dict(color='blue')),
             row=subplot_row, col=subplot_col
         )
         fig.add_trace(
-            go.Scatter(x=np.arange(n_), y=ratio_3, mode='lines', name='ERSB3'),
+            go.Scatter(x=np.arange(n_), y=ratio_3, mode='lines', name='ERSB3',line=dict(color='red')),
             row=subplot_row, col=subplot_col
         )
 
@@ -327,7 +335,8 @@ def visualise_base_frequency(frames, frame_rate, N_, n_, fig=None, subplot_row=1
             x=np.arange(n_),
             y=base_frequencies,
             mode='lines',
-            name='base_frequencies'
+            name='base_frequencies',
+            line=dict(color='pink')            
         ))
         fig.update_layout(
             title= 'Base frequencies',
@@ -337,17 +346,17 @@ def visualise_base_frequency(frames, frame_rate, N_, n_, fig=None, subplot_row=1
         fig.show()
     else:
         fig.add_trace(
-            go.Scatter(x=np.arange(n_), y=base_frequencies, mode='lines', name='base_frequencies'),
+            go.Scatter(x=np.arange(n_), y=base_frequencies, mode='lines', name='base_frequencies', line=dict(color='pink')),
             row=subplot_row, col=subplot_col
         )
 
 
-def visualise_all(frames,frame_rate, n_, N_, window_type=None, in_db=False, spl=True):
+def visualise_all(frames,frame_rate, n_, N_, window_type=None, in_db=False, spl=True, legend=True):
     fft_frames = transform_frames_to_frequency_domain(frames, frame_rate, N_, window_type=window_type)
     fig = make_subplots(rows=8, cols=1, vertical_spacing=0.05,
                         subplot_titles=("Frames in Frequency Domain", "Volume", "Frequency Centroids", "Effective Bandwidths", "Spectral Flatness Measure","Spectral Crest Factor","Band Energy Ratio","Base Frequencies"))
     
-    fig.update_layout(height=2200,showlegend=True)
+    fig.update_layout(height=2200,showlegend=legend)
     
     visualise_frames(fft_frames, frame_rate, n_, N_, fig=fig, subplot_row=1, subplot_col=1)
     visualise_volume(fft_frames,n_, N_, in_db=in_db, spl=spl, fig=fig, subplot_row=2, subplot_col=1)
