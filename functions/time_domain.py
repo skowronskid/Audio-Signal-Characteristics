@@ -23,13 +23,17 @@ def read_wave(path, display=True):
     return audio, frame_rate, audio_time, n_samples
 
 
-def split_to_frames(audio, frame_rate, percent_frame_size=0.1, percent_hop_length=0.5):
+def split_to_frames(audio, frame_rate, percent_frame_size=0.1, percent_hop_length=0.5, set_frame_size=None):
     # default frame_size is 10% of the audio and default frame overlap is 50% overlap
 
     # naming convention: n_ - number of frames, N_ - number of samples in a frame
     # convention is consistent with "Cechy sygnalu audio w dziedzinie czasu.pdf"
-    frame_size = int(percent_frame_size * frame_rate)
-    hop_length = int(percent_hop_length * percent_frame_size * frame_rate)
+    if set_frame_size:
+        frame_size = set_frame_size
+        hop_length = int(percent_hop_length * frame_size)
+    else:
+        frame_size = int(percent_frame_size * frame_rate)
+        hop_length = int(percent_hop_length * percent_frame_size * frame_rate)
     frames = []
     for i in range(0, len(audio), hop_length):
         frame = audio[i:i + frame_size]
